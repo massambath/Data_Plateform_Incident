@@ -1,4 +1,4 @@
-from ingestion.generate_data import generate_incidents
+from .generate_data import generate_incident
 from ingestion.db import get_connection
 from ingestion.validators import DBValidator
 import json
@@ -6,7 +6,7 @@ def ingest():
     conn = get_connection()
     cursor = conn.cursor()
 
-    incidents = generate_incidents(n=100)
+    incidents = generate_incident(n=100)
 
     query = """
         INSERT INTO incidents (
