@@ -1,28 +1,29 @@
-from .generate_data import generate_incident
-from ingestion.db import get_connection
-from ingestion.validators import DBValidator
-import json
+
+from .generate_data import generate_incidents
+from .db import get_connection
+from datetime import datetime
+
 def ingest():
+    #Générer 100 incidents
+    incidents = generate_incidents(n=100, start_date=datetime.now())
+    #Connexion à Mysql
     conn = get_connection()
     cursor = conn.cursor()
 
-    incidents = generate_incident(n=100)
-
+    #Requête d'insertion
     query = """
-        INSERT INTO incidents (
-            service_name,
+    insert into incidents(
+                service_name,
             severity,
             incident_type,
             description,
             created_at,
             resolved_at
-        )
-        VALUES (%s, %s, %s, %s, %s, %s)
+            )
+    values(%s,%s,%s,%s,%s,%s)
     """
-
-    values = [
-        (
-            i["service_name"],
+    # Préparer les valeurs 
+    values = [(i["service_name"],
             i["severity"],
             i["incident_type"],
             i["description"],
@@ -31,21 +32,13 @@ def ingest():
         )
         for i in incidents
     ]
-
-    cursor.executemany(query, values)
+    #Exécuter 
+    cursor.executemany(query,values)
     conn.commit()
-
     cursor.close()
     conn.close()
-
     print(f"✅ {len(values)} incidents ingérés")
 
-    # ===== Lancement des checks =====
-    validator = DBValidator()
-    report = validator.run_all_checks()
-    print("🔎 Observability report:")
-    print(json.dumps(report, indent=4))
-    validator.save_report()
-
+# Point d'entrée
 if __name__ == "__main__":
     ingest()
